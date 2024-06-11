@@ -39,29 +39,29 @@ function deepClone(target, cache = new WeakMap()) {
   /** 处理Map Set */
   if (target instanceof Map) {
     const clone = new Map();
+    cache.set(target, clone);
     target.forEach((key, value) => {
       clone.set(key, value);
     });
-    cache.set(target, clone);
     return clone;
   }
 
   if (target instanceof Set) {
     const clone = new Set();
+    cache.set(target, clone);
     target.forEach((value) => {
       clone.add(value);
     });
-    cache.set(target, clone);
     return clone;
   }
 
   /** 处理数组，每1项都需要递归处理 */
   if (Array.isArray(target)) {
     const clone = [];
+    cache.set(target, clone);
     for (let i = 0; i < target.length; i++) {
       cache[i] = deepClone(target[i], cache);
     }
-    Map.set(target, clone);
     return clone;
   }
 
@@ -71,18 +71,49 @@ function deepClone(target, cache = new WeakMap()) {
   const symbolKeys = Object.getOwnPropertySymbols(target)
 
   const clone = Object.create(Object.getPrototypeOf(target));
+  cache.set(target, clone);
   /** 处理描述符 */
   Object.defineProperties(clone, Object.getOwnPropertyDescriptors(target));
   [...keys,...symbolKeys].forEach((key) => {
     clone[key] = deepClone(clone[key], cache);
   });
-  cache.set(target, clone);
   return clone;
 }
 
 
-const obj = {
-    [Symbol('a')]: 'symbol_infos'
+function add(x,y){
+    return x+y
 }
 
-console.log(deepClone(obj))
+const reg = /^haha$/g
+const now = new Date()
+
+const map = new Map()
+map.set('test',reg)
+const set = new Set()
+set.add('set value')
+
+const obj = {
+    [Symbol('a')]: 'symbol_infos',
+    add,
+    reg,
+    date: now,
+    list: [now,add,reg,100,{
+        a: 100,
+    }],
+    map,
+    set,
+}
+
+Object.defineProperty(obj,'unenumerable',{
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: 'unenumerable value'
+})
+
+// 循环
+obj.parent = obj
+
+console.log(obj,deepClone(obj))
+
